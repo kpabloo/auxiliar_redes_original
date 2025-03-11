@@ -3,6 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_login import LoginManager
 import logging
+import os  # Importar os para acceder a las variables de entorno
 from config import Config
 from models import init_db, load_user, get_db_connection, get_twitter_tokens
 from routes import register_routes
@@ -86,4 +87,8 @@ def run_scheduler():
 if __name__ == '__main__':
     init_db(Config.DB_CONFIG)
     run_scheduler()
-    app.run(debug=True, port=5000)
+    
+    # Usa el puerto proporcionado por Render (o 5000 por defecto)
+    port = int(os.environ.get('PORT', 5000))  # Obtiene el puerto desde la variable de entorno
+
+    app.run(debug=True, host='0.0.0.0', port=port)  # Asegúrate de que escuche en 0.0.0.0
