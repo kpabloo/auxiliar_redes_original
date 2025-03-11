@@ -66,12 +66,24 @@ def register_routes(app, db_config, allowed_extensions, upload_folder):
     @app.route('/link_twitter')
     @login_required
     def link_twitter():
-        auth = tweepy.OAuthHandler(Config.TWITTER_API_KEY, Config.TWITTER_API_SECRET, callback='http://localhost:5000/twitter_callback')
+        # Obtener la URL de callback dinámicamente
+        scheme = request.scheme
+        host = request.host
+        callback_url = f"{scheme}://{host}/twitter_callback"
+        
+        # Configurar OAuthHandler de Tweepy con la URL de callback dinámica
+        auth = tweepy.OAuthHandler(Config.TWITTER_API_KEY, Config.TWITTER_API_SECRET, callback=callback_url)
+        
         try:
+            # Obtener la URL de autorización y redirigir al usuario para autorizar la aplicación
             redirect_url = auth.get_authorization_url()
+            
+            # Guardar el token de solicitud para usarlo más tarde
             session['request_token'] = auth.request_token
+            
             return redirect(redirect_url)
         except tweepy.TweepError as e:
+            # Manejo de errores en caso de que la autenticación falle
             logger.error(f"Error al obtener URL de autorización: {e}")
             flash('Error al vincular Twitter')
             return redirect(url_for('index'))
