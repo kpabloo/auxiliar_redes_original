@@ -8,9 +8,9 @@ class Config:
     # Configuración de PostgreSQL
     DB_CONFIG = {
         'dbname': 'auxiliar_redes',  # Cambia esto
-        'user': 'postgres',           # Cambia esto
-        'password': 'postgres',    # Cambia esto
-        'host': 'localhost',
+        'user': 'auxiliar_redes_user',           # Cambia esto
+        'password': 'cqpFUAhs4x0EBFAGvPfBE5p6D58tfa9E',    # Cambia esto
+        'host': 'postgresql://auxiliar_redes_user:cqpFUAhs4x0EBFAGvPfBE5p6D58tfa9E@dpg-cv8af80gph6c73brdl60-a.oregon-postgres.render.com/auxiliar_redes',
         'port': '5432'
     }
 
