@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="form-section" style="margin: 50px auto;">
+        <h2>Iniciar Sesión</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <p>{{ messages[0] }}</p>
+            {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <label>Usuario:</label>
+            <input type="text" name="username" required>
+            <label>Contraseña:</label>
+            <input type="password" name="password" required>
+            <button type="submit">Iniciar Sesión</button>
+        </form>
+        <p>No tenés cuenta? <a href="{{ url_for('register') }}">Registrate</a></p>
+    </div>
+</body>
+</html>

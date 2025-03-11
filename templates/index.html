@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador de Redes Sociales</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="calendar">
+            <h2>Calendario</h2>
+            <div class="calendar-controls">
+                <button id="viewMonthBtn">Vista Mensual</button>
+                <button id="viewWeekBtn">Vista Semanal</button>
+                <button id="viewDayBtn">Vista Diaria</button>
+            </div>
+            <div id="calendar"></div>
+            <button id="exportBtn" style="margin-top: 10px;">Exportar a PDF</button>
+            <a href="{{ url_for('logout') }}" style="display: block; margin-top: 10px;">Cerrar Sesión</a>
+        </div>
+        <div class="form-section">
+            <h2>Añadir Publicación</h2>
+            <form id="postForm" enctype="multipart/form-data">
+                <label>Día:</label>
+                <input type="date" id="date" required>
+                <label>Hora:</label>
+                <input type="time" id="time">
+                <label>Red Social:</label>
+                <select id="socialNetwork" required>
+                    <option value="Twitter/X">Twitter/X</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Facebook">Facebook</option>
+                </select>
+                <label>Texto:</label>
+                <textarea id="text" rows="8" required></textarea>
+                <label>Imagen (opcional):</label>
+                <input type="file" id="image" accept="image/*">
+                <button type="submit">Agregar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Detalles -->
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal" class="close">×</span>
+            <h3>Detalles de la Publicación</h3>
+            <p><strong>Fecha:</strong> <span id="modalDate"></span></p>
+            <p><strong>Hora:</strong> <span id="modalTime"></span></p>
+            <p><strong>Red Social:</strong> <span id="modalSocialNetwork"></span></p>
+            <div class="post-container">
+                <img id="modalImage" src="" alt="Sin imagen" class="post-image">
+                <div class="post-text">
+                    <p><strong>Texto:</strong> <span id="modalText"></span></p>
+                </div>
+            </div>
+            <button id="editFromModal" class="edit-btn">Editar</button>
+            <button id="deleteFromModal" class="delete-btn">Eliminar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Edición -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span id="closeEditModal" class="close">×</span>
+            <h3>Editar Publicación</h3>
+            <form id="editForm" enctype="multipart/form-data">
+                <input type="hidden" id="existingImagePath">
+                <label>Día:</label>
+                <input type="date" id="editDate" required>
+                <label>Hora:</label>
+                <input type="time" id="editTime">
+                <label>Red Social:</label>
+                <select id="editSocialNetwork" required>
+                    <option value="Twitter/X">Twitter/X</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Facebook">Facebook</option>
+                </select>
+                <label>Texto:</label>
+                <textarea id="editText" rows="8" required></textarea>
+                <label>Imagen (opcional):</label>
+                <input type="file" id="editImage" accept="image/*">
+                <button type="submit">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
