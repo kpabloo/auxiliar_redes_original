@@ -1,233 +1,89 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+# app.py
+from flask import Flask
 from flask_cors import CORS
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-import sqlite3
+from flask_login import LoginManager
 import logging
-import os
-from werkzeug.utils import secure_filename
+from config import Config
+from models import init_db, load_user, get_db_connection, get_twitter_tokens
+from routes import register_routes
+import time
+import threading
+from datetime import datetime
+from twitter import post_to_twitter
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.secret_key = 'tu_clave_secreta_aqui'  # Cambia esto por algo seguro
+app.secret_key = Config.SECRET_KEY
+app.config['UPLOAD_FOLDER'] = Config.UPLOAD_FOLDER
 CORS(app)
-
-# Configura la carpeta de subidas
-UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-class User(UserMixin):
-    def __init__(self, id):
-        self.id = id
-
 @login_manager.user_loader
-def load_user(user_id):
+def user_loader(user_id):
+    return load_user(user_id, Config.DB_CONFIG)
+
+# Registrar rutas
+register_routes(app, Config.DB_CONFIG, Config.ALLOWED_EXTENSIONS, Config.UPLOAD_FOLDER)
+
+# Variable global para controlar el hilo
+scheduler_running = False
+
+def check_scheduled_posts():
+    global scheduler_running
+    if scheduler_running:
+        logger.warning("Scheduler ya está corriendo, omitiendo nueva instancia")
+        return
+    scheduler_running = True
     try:
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('SELECT id FROM users WHERE id = ?', (user_id,))
-        user = c.fetchone()
-        conn.close()
-        return User(user[0]) if user else None
-    except Exception as e:
-        logger.error(f"Error al cargar usuario: {e}")
-        return None
-
-def init_db():
-    try:
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
-        )''')
-        c.execute('''CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER,
-            date TEXT NOT NULL,
-            time TEXT,
-            social_network TEXT NOT NULL,
-            text TEXT NOT NULL,
-            image_path TEXT,  -- Nueva columna para la ruta de la imagen
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )''')
-        try:
-            c.execute('ALTER TABLE posts ADD COLUMN user_id INTEGER')
-            logger.info("Columna user_id añadida a la tabla posts")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            c.execute('ALTER TABLE posts ADD COLUMN time TEXT')
-            logger.info("Columna time añadida a la tabla posts")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            c.execute('ALTER TABLE posts ADD COLUMN image_path TEXT')
-            logger.info("Columna image_path añadida a la tabla posts")
-        except sqlite3.OperationalError:
-            pass
-        conn.commit()
-        logger.info("Base de datos inicializada/actualizada correctamente")
-    except Exception as e:
-        logger.error(f"Error al inicializar la base de datos: {e}")
-    finally:
-        conn.close()
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('SELECT id, password FROM users WHERE username = ?', (username,))
-        user = c.fetchone()
-        conn.close()
-        if user and check_password_hash(user[1], password):
-            login_user(User(user[0]))
-            logger.info(f"Usuario {username} inició sesión")
-            return redirect(url_for('index'))
-        flash('Usuario o contraseña incorrectos')
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        hashed_password = generate_password_hash(password, method='sha256')
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        try:
-            c.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed_password))
-            conn.commit()
-            flash('Usuario registrado, ahora inicia sesión')
-            return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            flash('El usuario ya existe')
-        conn.close()
-    return render_template('register.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logger.info(f"Usuario {current_user.id} cerró sesión")
-    logout_user()
-    return redirect(url_for('login'))
-
-@app.route('/')
-@login_required
-def index():
-    return render_template('index.html')
-
-@app.route('/posts', methods=['GET'])
-@login_required
-def get_posts():
-    try:
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('SELECT id, date, time, social_network, text, image_path FROM posts WHERE user_id = ?', (current_user.id,))
-        posts = [{'id': row[0], 'date': row[1], 'time': row[2], 'social_network': row[3], 'text': row[4], 'image_path': row[5]} for row in c.fetchall()]
-        conn.close()
-        logger.debug(f"Publicaciones obtenidas para user_id {current_user.id}: {len(posts)}")
-        return jsonify(posts)
-    except Exception as e:
-        logger.error(f"Error en get_posts: {e}")
-        return jsonify({'error': 'Error interno del servidor'}), 500
-
-@app.route('/posts', methods=['POST'])
-@login_required
-def add_post():
-    try:
-        date = request.form['date']
-        time = request.form.get('time', '')
-        social_network = request.form['social_network']
-        text = request.form['text']
-        image_path = None
-
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{current_user.id}_{filename}")
-                file.save(file_path)
-                image_path = f"/{file_path}"
-
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('INSERT INTO posts (user_id, date, time, social_network, text, image_path) VALUES (?, ?, ?, ?, ?, ?)',
-                  (current_user.id, date, time, social_network, text, image_path))
-        conn.commit()
-        conn.close()
-        return jsonify({'message': 'Publicación guardada'}), 201
-    except Exception as e:
-        logger.error(f"Error en add_post: {e}")
-        return jsonify({'error': 'Error al guardar publicación'}), 500
-
-@app.route('/posts/<int:post_id>', methods=['PUT'])
-@login_required
-def update_post(post_id):
-    try:
-        date = request.form['date']
-        time = request.form.get('time', '')
-        social_network = request.form['social_network']
-        text = request.form['text']
-        image_path = request.form.get('existing_image_path', '')
-
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{current_user.id}_{filename}")
-                file.save(file_path)
-                image_path = f"/{file_path}"
-
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('UPDATE posts SET date = ?, time = ?, social_network = ?, text = ?, image_path = ? WHERE id = ? AND user_id = ?',
-                  (date, time, social_network, text, image_path, post_id, current_user.id))
-        conn.commit()
-        conn.close()
-        return jsonify({'message': 'Publicación actualizada'}), 200
-    except Exception as e:
-        logger.error(f"Error en update_post: {e}")
-        return jsonify({'error': 'Error al actualizar publicación'}), 500
-
-@app.route('/posts/<int:post_id>', methods=['DELETE'])
-@login_required
-def delete_post(post_id):
-    try:
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('SELECT image_path FROM posts WHERE id = ? AND user_id = ?', (post_id, current_user.id))
-        post = c.fetchone()
-        if post and post[0]:
+        while True:
+            start_time = time.time()
             try:
-                os.remove(post[0][1:])  # Elimina el archivo del sistema
-            except:
-                pass
-        c.execute('DELETE FROM posts WHERE id = ? AND user_id = ?', (post_id, current_user.id))
-        conn.commit()
-        conn.close()
-        return jsonify({'message': 'Publicación eliminada'}), 200
-    except Exception as e:
-        logger.error(f"Error en delete_post: {e}")
-        return jsonify({'error': 'Error al eliminar publicación'}), 500
+                conn = get_db_connection(Config.DB_CONFIG)
+                c = conn.cursor()
+                now = datetime.now().strftime('%Y-%m-%d %H:%M')  # Formato: "YYYY-MM-DD HH:MM"
+                logger.debug(f"Verificando publicaciones programadas a las {now}")
+                c.execute("SELECT id, user_id, date, time, social_network, text, image_path FROM posts WHERE date || ' ' || COALESCE(time, '') <= %s AND social_network = %s", (now, 'Twitter/X'))
+                posts = c.fetchall()
+                if posts:
+                    logger.debug(f"Encontradas {len(posts)} publicaciones para procesar")
+                for post in posts:
+                    post_id, user_id, date, post_time, social_network, text, image_path = post
+                    tokens = get_twitter_tokens(user_id, Config.DB_CONFIG)
+                    if tokens:
+                        access_token, access_token_secret = tokens
+                        logger.info(f"Publicando para user_id {user_id}: {text}")
+                        if post_to_twitter(text, image_path, access_token, access_token_secret):
+                            c.execute('DELETE FROM posts WHERE id = %s', (post_id,))
+                            logger.info(f"Publicación {post_id} eliminada tras ser publicada en Twitter")
+                        else:
+                            logger.error(f"Fallo al publicar post {post_id}")
+                    else:
+                        logger.warning(f"No se encontraron tokens para user_id {user_id}")
+                conn.commit()
+                conn.close()
+            except Exception as e:
+                logger.error(f"Error al verificar publicaciones programadas: {e}")
+            # Ajustar el tiempo de espera para que sea exactamente 60 segundos
+            elapsed_time = time.time() - start_time
+            sleep_time = max(60 - elapsed_time, 0)
+            logger.debug(f"Esperando {sleep_time:.2f} segundos hasta la próxima verificación")
+            time.sleep(sleep_time)
+    finally:
+        scheduler_running = False
+
+def run_scheduler():
+    if not scheduler_running:
+        scheduler_thread = threading.Thread(target=check_scheduled_posts, daemon=True)
+        scheduler_thread.start()
+    else:
+        logger.warning("Intentando iniciar scheduler, pero ya está activo")
 
 if __name__ == '__main__':
-    init_db()
+    init_db(Config.DB_CONFIG)
+    run_scheduler()
     app.run(debug=True, port=5000)

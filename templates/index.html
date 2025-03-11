@@ -18,6 +18,9 @@
             </div>
             <div id="calendar"></div>
             <button id="exportBtn" style="margin-top: 10px;">Exportar a PDF</button>
+            {% if not twitter_linked %}
+                <a href="{{ url_for('link_twitter') }}" style="display: block; margin-top: 10px;">Vincular Twitter</a>
+            {% endif %}
             <a href="{{ url_for('logout') }}" style="display: block; margin-top: 10px;">Cerrar Sesión</a>
         </div>
         <div class="form-section">
