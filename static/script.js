@@ -22,8 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentEvent = null;
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek',  // Vista inicial con horas
+        initialView: 'dayGridMonth',  // Vista inicial con horas
         height: 'auto',
+        locale: 'es',
         events: fetchPosts,
         slotMinTime: '00:00:00',  // Horario mínimo
         slotMaxTime: '24:00:00',  // Horario máximo
