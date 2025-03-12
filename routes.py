@@ -5,7 +5,8 @@ import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import logging
-from models import get_db_connection, User, get_twitter_tokens, save_twitter_tokens
+from instagram import exchange_code_for_token, get_instagram_auth_url
+from models import get_db_connection, User, get_twitter_tokens, save_twitter_tokens, get_instagram_tokens, save_instagram_tokens
 from utils import allowed_file
 from twitter import post_to_twitter
 import tweepy
@@ -61,7 +62,8 @@ def register_routes(app, db_config, allowed_extensions, upload_folder):
     @login_required
     def index():
         twitter_linked = get_twitter_tokens(current_user.id, db_config) is not None
-        return render_template('index.html', twitter_linked=twitter_linked)
+        instagram_linked = get_instagram_tokens(current_user.id, db_config) is not None
+        return render_template('index.html', twitter_linked=twitter_linked, instagram_linked=instagram_linked)
 
     @app.route('/link_twitter')
     @login_required
@@ -93,6 +95,25 @@ def register_routes(app, db_config, allowed_extensions, upload_folder):
         except tweepy.TweepError as e:
             logger.error(f"Error al obtener tokens de acceso: {e}")
             flash('Error al vincular Twitter')
+        return redirect(url_for('index'))
+
+    @app.route('/connect_instagram')
+    @login_required
+    def connect_instagram():
+        auth_url = get_instagram_auth_url(Config.INSTAGRAM_CLIENT_ID, Config.INSTAGRAM_REDIRECT_URI)
+        return redirect(auth_url)
+
+    @app.route('/instagram_callback')
+    @login_required
+    def instagram_callback():
+        code = request.args.get('code')
+        if code:
+            token = exchange_code_for_token(code, Config.INSTAGRAM_CLIENT_ID, Config.INSTAGRAM_CLIENT_SECRET, Config.INSTAGRAM_REDIRECT_URI)
+            if token:
+                save_instagram_tokens(current_user.id, token, db_config)
+                flash('Cuenta de Instagram vinculada exitosamente')
+                return redirect(url_for('index'))
+        flash('Error al autenticar con Instagram')
         return redirect(url_for('index'))
 
     @app.route('/posts', methods=['GET'])
