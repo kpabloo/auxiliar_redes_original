@@ -23,7 +23,7 @@ class Config:
     # Configuracion Instagram
     INSTAGRAM_CLIENT_ID = os.environ.get('660391139881627')
     INSTAGRAM_CLIENT_SECRET = os.environ.get('42d54108a93f445d6ff8cf137d90515b')
-    INSTAGRAM_REDIRECT_URI = 'http://localhost:5000/instagram_callback'
+    INSTAGRAM_REDIRECT_URI = 'https://postify-czqs.onrender.com/instagram_callback'
 
 # Crear carpeta de uploads si no existe
 if not os.path.exists(Config.UPLOAD_FOLDER):
