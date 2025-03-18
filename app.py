@@ -1,17 +1,18 @@
 # app.py
-from flask import Flask
+from flask import Flask, redirect, request
 from flask_cors import CORS
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 import logging
 import os
 from config import Config
-from models import init_db, load_user, get_db_connection, get_twitter_tokens, get_instagram_tokens
+from models import init_db, load_user, get_db_connection, get_twitter_tokens, get_instagram_tokens, get_facebook_tokens
 from routes import register_routes
 import time
 import threading
 from datetime import datetime
 from twitter import post_to_twitter
-from instagram import post_to_instagram  # Solo importamos lo necesario para el scheduler
+from instagram import post_to_instagram
+from facebook import post_to_facebook
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -65,6 +66,12 @@ def check_scheduled_posts():
                             if post_to_instagram(text, image_path, token):
                                 c.execute('DELETE FROM posts WHERE id = %s', (post_id,))
                                 logger.info(f"Publicación {post_id} eliminada tras ser publicada en Instagram")
+                    elif social_network == 'Facebook':
+                        token = get_facebook_tokens(user_id, Config.DB_CONFIG)
+                        if token:
+                            if post_to_facebook(text, image_path, token):
+                                c.execute('DELETE FROM posts WHERE id = %s', (post_id,))
+                                logger.info(f"Publicación {post_id} eliminada tras ser publicada en Facebook")
                 conn.commit()
             elapsed_time = time.time() - start_time
             sleep_time = max(60 - elapsed_time, 0)

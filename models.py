@@ -37,8 +37,12 @@ def init_db(db_config):
                 access_token_secret TEXT NOT NULL,
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )''')
-            # Nueva tabla para tokens de Instagram
             c.execute('''CREATE TABLE IF NOT EXISTS instagram_tokens (
+                user_id INTEGER PRIMARY KEY,
+                access_token TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )''')
+            c.execute('''CREATE TABLE IF NOT EXISTS facebook_tokens (
                 user_id INTEGER PRIMARY KEY,
                 access_token TEXT NOT NULL,
                 FOREIGN KEY (user_id) REFERENCES users (id)
@@ -81,7 +85,7 @@ def save_twitter_tokens(user_id, access_token, access_token_secret, db_config):
     except Exception as e:
         logger.error(f"Error al guardar tokens de Twitter: {e}")
 
-# Nuevas funciones para Instagram
+# Funciones para Instagram
 def get_instagram_tokens(user_id, db_config):
     try:
         with get_db_connection(db_config) as conn:
@@ -103,3 +107,26 @@ def save_instagram_tokens(user_id, access_token, db_config):
             logger.info(f"Token de Instagram guardado para user_id {user_id}")
     except Exception as e:
         logger.error(f"Error al guardar tokens de Instagram: {e}")
+
+# Funciones para Facebook (añadidas de nuevo)
+def get_facebook_tokens(user_id, db_config):
+    try:
+        with get_db_connection(db_config) as conn:
+            c = conn.cursor()
+            c.execute('SELECT access_token FROM facebook_tokens WHERE user_id = %s', (user_id,))
+            token = c.fetchone()
+            return token[0] if token else None
+    except Exception as e:
+        logger.error(f"Error al obtener tokens de Facebook: {e}")
+        return None
+
+def save_facebook_tokens(user_id, access_token, db_config):
+    try:
+        with get_db_connection(db_config) as conn:
+            c = conn.cursor()
+            c.execute('INSERT INTO facebook_tokens (user_id, access_token) VALUES (%s, %s) ON CONFLICT (user_id) DO UPDATE SET access_token = %s',
+                      (user_id, access_token, access_token))
+            conn.commit()
+            logger.info(f"Token de Facebook guardado para user_id {user_id}")
+    except Exception as e:
+        logger.error(f"Error al guardar tokens de Facebook: {e}")

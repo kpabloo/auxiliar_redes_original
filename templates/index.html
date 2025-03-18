@@ -20,6 +20,18 @@
             <button id="exportBtn" style="margin-top: 10px;">Exportar a PDF</button>
             {% if not twitter_linked %}
                 <a href="{{ url_for('link_twitter') }}" style="display: block; margin-top: 10px;">Vincular Twitter</a>
+            {% else %}
+                <p style="display: block; margin-top: 10px;">Twitter vinculado</p>
+            {% endif %}
+            {% if not instagram_linked %}
+                <a href="{{ url_for('connect_instagram') }}" style="display: block; margin-top: 10px;">Vincular Instagram</a>
+            {% else %}
+                <p style="display: block; margin-top: 10px;">Instagram vinculado</p>
+            {% endif %}
+            {% if not facebook_linked %}
+                <a href="{{ url_for('connect_facebook') }}" style="display: block; margin-top: 10px;">Vincular Facebook</a>
+            {% else %}
+                <p style="display: block; margin-top: 10px;">Facebook vinculado</p>
             {% endif %}
             <a href="{{ url_for('logout') }}" style="display: block; margin-top: 10px;">Cerrar Sesión</a>
         </div>
