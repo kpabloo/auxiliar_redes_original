@@ -231,6 +231,6 @@ def register_routes(app, db_config, allowed_extensions, upload_folder):
             logger.error(f"Error en delete_post: {e}")
             return jsonify({'error': 'Error al eliminar publicación'}), 500
         
-    @app.route('/privacy_policy')
+    @app.route('/politicas-de-privacidad')
     def privacy_policy():
-        return render_template('privacy_policy.html')
+        return render_template('politicas-de-privacidad.html')
