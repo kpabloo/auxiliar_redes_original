@@ -70,7 +70,7 @@ def register_routes(app, db_config, allowed_extensions, upload_folder):
     @app.route('/link_twitter')
     @login_required
     def link_twitter():
-        auth = tweepy.OAuthHandler(Config.TWITTER_API_KEY, Config.TWITTER_API_SECRET, callback='https://postify-czqs.onrender.com/twitter_callback')
+        auth = tweepy.OAuthHandler(Config.TWITTER_API_KEY, Config.TWITTER_API_SECRET, callback='https://socialbotic.geco.com.ar/twitter_callback')
         try:
             redirect_url = auth.get_authorization_url()
             session['request_token'] = auth.request_token

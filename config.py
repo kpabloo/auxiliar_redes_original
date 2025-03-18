@@ -23,11 +23,11 @@ class Config:
     # Configuracion Instagram
     INSTAGRAM_CLIENT_ID = os.environ.get('660391139881627')
     INSTAGRAM_CLIENT_SECRET = os.environ.get('42d54108a93f445d6ff8cf137d90515b')
-    INSTAGRAM_REDIRECT_URI = 'https://postify-czqs.onrender.com/instagram_callback'
+    INSTAGRAM_REDIRECT_URI = 'https://socialbotic.geco.com.ar/instagram_callback'
 
     FACEBOOK_APP_ID = 'TU_FACEBOOK_APP_ID'  # Reemplaza con el App ID de Facebook
     FACEBOOK_APP_SECRET = 'TU_FACEBOOK_APP_SECRET'  # Reemplaza con el App Secret de Facebook
-    FACEBOOK_REDIRECT_URI = 'https://postify-czqs.onrender.com/facebook_callback'
+    FACEBOOK_REDIRECT_URI = 'https://socialbotic.geco.com.ar/facebook_callback'
 
 # Crear carpeta de uploads si no existe
 if not os.path.exists(Config.UPLOAD_FOLDER):
