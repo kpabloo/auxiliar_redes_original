@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador de Redes Sociales</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>Socialbotic</title>
+    <link rel="stylesheet" href="/static/styles-global.css">
+    <link rel="stylesheet" href="/static/styles-index.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
 </head>
 <body>
@@ -17,23 +18,23 @@
                 <button id="viewDayBtn">Vista Diaria</button>
             </div>
             <div id="calendar"></div>
-            <button id="exportBtn" style="margin-top: 10px;">Exportar a PDF</button>
+            <button id="exportBtn">Exportar a PDF</button>
             {% if not twitter_linked %}
-                <a href="{{ url_for('link_twitter') }}" style="display: block; margin-top: 10px;">Vincular Twitter</a>
+                <a href="{{ url_for('link_twitter') }}" class="social-link twitter">Vincular Twitter</a>
             {% else %}
-                <p style="display: block; margin-top: 10px;">Twitter vinculado</p>
+                <p class="social-linked">Twitter vinculado</p>
             {% endif %}
             {% if not instagram_linked %}
-                <a href="{{ url_for('connect_instagram') }}" style="display: block; margin-top: 10px;">Vincular Instagram</a>
+                <a href="{{ url_for('connect_instagram') }}" class="social-link instagram">Vincular Instagram</a>
             {% else %}
-                <p style="display: block; margin-top: 10px;">Instagram vinculado</p>
+                <p class="social-linked">Instagram vinculado</p>
             {% endif %}
             {% if not facebook_linked %}
-                <a href="{{ url_for('connect_facebook') }}" style="display: block; margin-top: 10px;">Vincular Facebook</a>
+                <a href="{{ url_for('connect_facebook') }}" class="social-link facebook">Vincular Facebook</a>
             {% else %}
-                <p style="display: block; margin-top: 10px;">Facebook vinculado</p>
+                <p class="social-linked">Facebook vinculado</p>
             {% endif %}
-            <a href="{{ url_for('logout') }}" style="display: block; margin-top: 10px;">Cerrar Sesión</a>
+            <a href="{{ url_for('logout') }}" class="logout-link">Cerrar Sesión</a>
         </div>
         <div class="form-section">
             <h2>Añadir Publicación</h2>
@@ -51,7 +52,10 @@
                 <label>Texto:</label>
                 <textarea id="text" rows="8" required></textarea>
                 <label>Imagen (opcional):</label>
-                <input type="file" id="image" accept="image/*">
+                <div class="upload-btn-wrapper">
+                    <span class="btn"></span>
+                    <input type="file" id="image" accept="image/*">
+                </div>
                 <button type="submit">Agregar</button>
             </form>
         </div>
@@ -96,7 +100,10 @@
                 <label>Texto:</label>
                 <textarea id="editText" rows="8" required></textarea>
                 <label>Imagen (opcional):</label>
-                <input type="file" id="editImage" accept="image/*">
+                <div class="upload-btn-wrapper">
+                    <span class="btn"></span>
+                    <input type="file" id="editImage" accept="image/*">
+                </div>
                 <button type="submit">Guardar Cambios</button>
             </form>
         </div>
