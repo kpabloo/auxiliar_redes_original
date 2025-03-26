@@ -9,7 +9,7 @@ def get_facebook_auth_url(client_id, redirect_uri):
         f"https://www.facebook.com/v19.0/dialog/oauth"
         f"?client_id={client_id}"
         f"&redirect_uri={redirect_uri}"
-        f"&scope=public_profile,publish_to_groups,manage_pages"
+        f"&scope=public_profile"
         f"&response_type=code"
     )
     return auth_url
