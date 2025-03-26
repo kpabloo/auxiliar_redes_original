@@ -26,7 +26,7 @@ class Config:
     INSTAGRAM_REDIRECT_URI = 'https://socialbotic.geco.com.ar/instagram_callback'
 
     FACEBOOK_APP_ID = '530713843385760'  # Reemplaza con el App ID de Facebook
-    FACEBOOK_APP_SECRET = 'ce14b5316006e1282d4994d77c4bcac9'  # Reemplaza con el App Secret de Facebook
+    FACEBOOK_APP_SECRET = '15ea97e60d2b312b1db892a6d952c7b9'  # Reemplaza con el App Secret de Facebook
     FACEBOOK_REDIRECT_URI = 'https://socialbotic.geco.com.ar/facebook_callback'
 
 # Crear carpeta de uploads si no existe
